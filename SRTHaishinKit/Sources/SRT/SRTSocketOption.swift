@@ -383,42 +383,49 @@ public enum SRTSocketOption: String, Sendable {
             return String(describing: value).data(using: .utf8)
 
         case .int:
-            // Convert String to Int32
-            guard let intValue = Int32(stringValue) else {
-                return nil  // Conversion failed
+            // Use value directly if it's Int32; otherwise, try to parse if it's a String
+            if let intValue = value as? Int32 {
+                var v = intValue
+                return Data(bytes: &v, count: MemoryLayout.size(ofValue: v))
+            } else if let stringValue = value as? String, let intValue = Int32(stringValue) {
+                var v = intValue
+                return Data(bytes: &v, count: MemoryLayout.size(ofValue: v))
             }
-            var v = intValue
-            return Data(bytes: &v, count: MemoryLayout.size(ofValue: v))
+            return nil
 
         case .int64:
-            // Convert String to Int64
-            guard let int64Value = Int64(stringValue) else {
-                return nil  // Conversion failed
+            // Use value directly if it's Int64; otherwise, try to parse if it's a String
+            if let int64Value = value as? Int64 {
+                var v = int64Value
+                return Data(bytes: &v, count: MemoryLayout.size(ofValue: v))
+            } else if let stringValue = value as? String, let int64Value = Int64(stringValue) {
+                var v = int64Value
+                return Data(bytes: &v, count: MemoryLayout.size(ofValue: v))
             }
-            var v = int64Value
-            return Data(bytes: &v, count: MemoryLayout.size(ofValue: v))
+            return nil
 
         case .bool:
-            // Convert String to Bool
-            let lowercased = stringValue.lowercased()
-            let boolValue: Bool? = {
-                if lowercased == "true" || lowercased == "on" || lowercased == "yes"
-                    || lowercased == "1"
-                {
-                    return true
-                } else if lowercased == "false" || lowercased == "off" || lowercased == "no"
-                    || lowercased == "0"
-                {
-                    return false
-                }
-                return nil
-            }()
+            // Use value directly if it's Bool; otherwise, try to parse if it's a String
+            if let boolValue = value as? Bool {
+                var v: Int32 = boolValue ? 1 : 0
+                return Data(bytes: &v, count: MemoryLayout.size(ofValue: v))
+            } else if let stringValue = value as? String {
+                let lowercased = stringValue.lowercased()
+                let boolValue: Bool? = {
+                    if ["true", "on", "yes", "1"].contains(lowercased) {
+                        return true
+                    } else if ["false", "off", "no", "0"].contains(lowercased) {
+                        return false
+                    }
+                    return nil
+                }()
 
-            guard let bValue = boolValue else {
-                return nil  // Conversion failed
+                if let bValue = boolValue {
+                    var v: Int32 = bValue ? 1 : 0
+                    return Data(bytes: &v, count: MemoryLayout.size(ofValue: v))
+                }
             }
-            var v: Int32 = bValue ? 1 : 0
-            return Data(bytes: &v, count: MemoryLayout.size(ofValue: v))
+            return nil
 
         case .enumeration:
             switch self {
