@@ -436,7 +436,7 @@ public enum SRTSocketOption: String, Sendable {
                 guard var v = valmap?[key] as? SRT_TRANSTYPE else {
                     return nil
                 }
-                return .init(Data(bytes: &v, count: MemoryLayout.size(ofValue: value)))
+                return .init(Data(bytes: &v, count: MemoryLayout.size(ofValue: v)))
             default:
                 return nil
             }
