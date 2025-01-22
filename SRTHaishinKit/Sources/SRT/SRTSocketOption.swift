@@ -332,23 +332,23 @@ public enum SRTSocketOption: String, Sendable {
         case .rcvtimeo:
             return .int
         case .reuseaddr:
-            return .bool // WIP
+            return .bool  // WIP
         case .state:
-            return .int // WIP
+            return .int  // WIP
         case .event:
-            return .int // WIP
+            return .int  // WIP
         case .snddata:
-            return .int // WIP
+            return .int  // WIP
         case .rcvdata:
-            return .int // WIP
+            return .int  // WIP
         case .sender:
-            return .int // WIP
+            return .int  // WIP
         case .kmstate:
-            return .int // WIP
+            return .int  // WIP
         case .snddropdelay:
-            return .int // WIP
+            return .int  // WIP
         case .sndkmstate:
-            return .int // WIP
+            return .int  // WIP
         }
     }
 
@@ -357,7 +357,7 @@ public enum SRTSocketOption: String, Sendable {
         case .transtype:
             return [
                 "live": SRTT_LIVE,
-                "file": SRTT_FILE
+                "file": SRTT_FILE,
             ]
         default:
             return nil
@@ -381,23 +381,45 @@ public enum SRTSocketOption: String, Sendable {
         switch type {
         case .string:
             return String(describing: value).data(using: .utf8)
+
         case .int:
-            var v: Int32 = 0
-            if let value = value as? Int {
-                v = Int32(value)
+            // Convert String to Int32
+            guard let intValue = Int32(stringValue) else {
+                return nil  // Conversion failed
             }
-            return .init(Data(bytes: &v, count: MemoryLayout.size(ofValue: v)))
+            var v = intValue
+            return Data(bytes: &v, count: MemoryLayout.size(ofValue: v))
+
         case .int64:
-            guard var v = value as? Int64 else {
-                return nil
+            // Convert String to Int64
+            guard let int64Value = Int64(stringValue) else {
+                return nil  // Conversion failed
             }
-            return .init(Data(bytes: &v, count: MemoryLayout.size(ofValue: v)))
+            var v = int64Value
+            return Data(bytes: &v, count: MemoryLayout.size(ofValue: v))
+
         case .bool:
-            var v: Int32 = 0
-            if let value = value as? Bool {
-                v = value ? 1 : 0
+            // Convert String to Bool
+            let lowercased = stringValue.lowercased()
+            let boolValue: Bool? = {
+                if lowercased == "true" || lowercased == "on" || lowercased == "yes"
+                    || lowercased == "1"
+                {
+                    return true
+                } else if lowercased == "false" || lowercased == "off" || lowercased == "no"
+                    || lowercased == "0"
+                {
+                    return false
+                }
+                return nil
+            }()
+
+            guard let bValue = boolValue else {
+                return nil  // Conversion failed
             }
-            return .init(Data(bytes: &v, count: MemoryLayout.size(ofValue: v)))
+            var v: Int32 = bValue ? 1 : 0
+            return Data(bytes: &v, count: MemoryLayout.size(ofValue: v))
+
         case .enumeration:
             switch self {
             case .transtype:
@@ -414,7 +436,9 @@ public enum SRTSocketOption: String, Sendable {
         }
     }
 
-    static func configure(_ socket: SRTSOCKET, binding: Binding, options: [SRTSocketOption: Any]) -> [String] {
+    static func configure(_ socket: SRTSOCKET, binding: Binding, options: [SRTSocketOption: Any])
+        -> [String]
+    {
         var failures: [String] = []
         for (key, value) in options where key.binding == binding {
             if !key.setOption(socket, value: value) { failures.append(key.rawValue) }
