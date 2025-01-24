@@ -110,6 +110,8 @@ public struct VideoCodecSettings: Codable, Sendable {
     public var isHardwareEncoderEnabled: Bool
     /// Specifies the video frame interval.
     public var frameInterval: Double = 0.0
+  
+    public var disableTemporalCompression: Bool
 
     var format: Format = .h264
 
@@ -125,7 +127,8 @@ public struct VideoCodecSettings: Codable, Sendable {
         allowFrameReordering: Bool? = nil,
         // swiftlint:enable discouraged_optional_boolean
         dataRateLimits: [Double]? = [0.0, 0.0],
-        isHardwareEncoderEnabled: Bool = true
+        isHardwareEncoderEnabled: Bool = true,
+        disableTemporalCompression: Bool = false
     ) {
         self.videoSize = videoSize
         self.bitRate = bitRate
@@ -136,6 +139,7 @@ public struct VideoCodecSettings: Codable, Sendable {
         self.allowFrameReordering = allowFrameReordering
         self.dataRateLimits = dataRateLimits
         self.isHardwareEncoderEnabled = isHardwareEncoderEnabled
+        self.disableTemporalCompression = disableTemporalCompression
         if profileLevel.contains("HEVC") {
             self.format = .hevc
         }
@@ -199,6 +203,9 @@ public struct VideoCodecSettings: Codable, Sendable {
         #endif
         if !isBaseline && profileLevel.contains("H264") {
             options.insert(.init(key: .H264EntropyMode, value: kVTH264EntropyMode_CABAC))
+        }
+        if (disableTemporalCompression) {
+          options.insert(.init(key: .allowTemporalCompression, value: kCFBooleanFalse))
         }
         return options
     }
